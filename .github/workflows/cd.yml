@@ -63,7 +63,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-
+          ref: main
       - name: Bump patch version
         run: |
           bash .github/scripts/increment_version.sh Cargo.toml
@@ -77,7 +77,7 @@ jobs:
           git add Cargo.toml
           git commit -m "chore(release): v$new_version [skip ci]"
           git tag "v$new_version"
-          git push origin HEAD --tags
+          git push origin HEAD:refs/heads/main --tags
 
       - name: GitHub Release
         uses: softprops/action-gh-release@v2
