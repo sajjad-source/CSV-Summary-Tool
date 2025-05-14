@@ -70,6 +70,8 @@ jobs:
           bash .github/scripts/increment_version.sh Cargo.toml
           NEW_VERSION=$(grep -m1 '^version' Cargo.toml | cut -d '"' -f2)
 
+          echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_ENV
+
           git config user.name  "GitHub Actions"
           git config user.email "actions@github.com"
           git add Cargo.toml
@@ -81,5 +83,5 @@ jobs:
       - name: GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: "v${{ github.ref_name }}"
-          name: "Release ${{ github.ref_name }}"
+          tag_name: "v${{ env.NEW_VERSION }}"
+          name: "Release ${{ env.NEW_VERSION }}"
