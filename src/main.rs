@@ -66,7 +66,7 @@ fn main() -> Result<()> {
 
     for result in rdr.records() {
         let record = result.context("Failed to read a CSV record")?;
-        process_record(&headers, &record, &mut stats);
+        process_record(&record, &mut stats);
     }
 
     if stats.is_empty() {
@@ -91,11 +91,7 @@ fn main() -> Result<()> {
 }
 
 /// Parses all fields in `record`; updates `stats` whenever a field parses to f64.
-fn process_record(
-    headers: &StringRecord,
-    record: &StringRecord,
-    stats: &mut HashMap<usize, Stats>,
-) {
+fn process_record(record: &StringRecord, stats: &mut HashMap<usize, Stats>) {
     for (idx, field) in record.iter().enumerate() {
         if field.trim().is_empty() {
             continue; // missing value -> skip
