@@ -57,10 +57,12 @@ jobs:
   create-release:
     needs: [test-ubuntu, test-windows, test-macos]
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
         with:
-          token: ${{ env.GITHUB_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Bump patch version
         run: |
