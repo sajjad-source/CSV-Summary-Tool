@@ -57,6 +57,7 @@ jobs:
   create-release:
     needs: [test-ubuntu, test-windows, test-macos]
     runs-on: ubuntu-latest
+    environment: DEPLOYMENT
     permissions:
       contents: write
     steps:
