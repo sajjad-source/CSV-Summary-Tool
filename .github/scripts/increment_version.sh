@@ -1,12 +1,17 @@
-#!/bin/bash
-set -xeu
+#!/usr/bin/env bash
+set -euo pipefail
 
-version="$1"
-new_version=$(semver -i minor "$version")
-IFS=";"
-for crate_path in $CRATE_PATHS; do
-    cd "$crate_path"
-    sed -i "s/^version \?=.*$/version = \"$new_version\"/g" Cargo.toml
-    cd - || exit 1
-done
-echo "{name}={version::$version"} >> $GITHUB_OUTPUT
+# increment_version.sh
+# Usage:  ./increment_version.sh  <path/to/Cargo.toml>
+
+toml="$1"
+
+current=$(grep -m1 '^version' "$toml" | cut -d '"' -f2)
+IFS='.' read -r major minor patch <<<"$current"
+patch=$((patch + 1))
+next="$major.$minor.$patch"
+
+sed -i'' -E "0,/^version = \".*\"/s//version = \"$next\"/" "$toml"
+
+echo "Bumped $current → $next"
+echo "version=$next" >> "$GITHUB_OUTPUT"

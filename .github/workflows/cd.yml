@@ -1,0 +1,84 @@
+name: CD
+
+on:
+  push:
+    tags:
+      - v1.*
+      - v2.*
+
+env:
+  CRATE_PATHS: "."
+  GITHUB_TOKEN: ${{ secrets.GIT_TOKEN }}
+
+jobs:
+  check-version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.ver.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: ver
+        name: Extract version
+        run: |
+          bash .github/scripts/get_version.sh
+          echo "version=${{ steps.ver.outputs.version }}"
+
+  test-ubuntu:
+    needs: check-version
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+      - run: cargo test --release
+
+  test-windows:
+    needs: check-version
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+      - run: cargo test --release
+
+  test-macos:
+    needs: check-version
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+      - run: cargo test --release
+
+  create-release:
+    needs: [test-ubuntu, test-windows, test-macos]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ env.GITHUB_TOKEN }}
+
+      - name: Bump patch version
+        run: |
+          bash .github/scripts/increment_version.sh Cargo.toml
+          new_version=$(grep -m1 '^version' Cargo.toml | cut -d '"' -f2)
+          echo "New version: $new_version"
+
+      - name: Commit & tag
+        run: |
+          git config user.name  "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add Cargo.toml
+          git commit -m "chore(release): v$new_version [skip ci]"
+          git tag "v$new_version"
+          git push origin HEAD --tags
+
+      - name: GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: "v${{ github.ref_name }}"
+          name: "Release ${{ github.ref_name }}"

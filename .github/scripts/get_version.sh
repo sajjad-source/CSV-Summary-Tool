@@ -1,24 +1,16 @@
-#!/bin/bash
-set -xeu
+#!/usr/bin/env bash
+set -euo pipefail
 
-IFS=";"
-version=""
-for crate_path in $CRATE_PATHS; do
-    cd "$crate_path"
-    current_version=$(grep -m 1 '^version' Cargo.toml | cut -d '"' -f2 | tr -d '\n')
-    if [ "$version" == "" ]; then
-       version="$current_version"
-    elif [ "$current_version" != "$version" ]; then
-        echo "All crates must have the same version"
+paths="${CRATE_PATHS:-.}"
+
+for dir in ${paths//,/ }; do
+    ver=$(grep -m1 '^version' "$dir/Cargo.toml" | cut -d '"' -f2)
+    if [[ -z "${version:-}" ]]; then
+        version="$ver"
+    elif [[ "$ver" != "$version" ]]; then
+        echo "All crates must share the same version" >&2
         exit 1
     fi
-    cd - || exit 1
 done
 
-if [ "$version" == "" ]; then
-    echo "Version not found in Cargo.toml files"
-    exit 1
-else
-    #echo "::set-output name=version::$version"
-    echo "{name}={version::$version"} >> $GITHUB_OUTPUT
-fi
+echo "version=$version" >> "$GITHUB_OUTPUT"
